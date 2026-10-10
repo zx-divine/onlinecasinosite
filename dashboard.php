@@ -1,0 +1,34 @@
+<?php
+declare(strict_types=1); require_once __DIR__.'/server/includes/bootstrap.php'; require_once __DIR__.'/server/includes/view.php'; $user=require_login($pdo); if($user['role']==='admin') redirect('admin.php'); $error='';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf();
+    $action = post_string('action', 30);
+    if ($action === 'proposal') {
+        if (limited($pdo, 'proposal:' . (int)$user['id'], 10, 3600)) {
+            $error = 'You have submitted many proposals recently. Try again later.';
+        } else {
+            $title = post_string('title', 120);
+            $category = post_string('category', 80);
+            $details = post_string('details', 5000);
+            if ($title === '' || $details === '') {
+                $error = 'Add a title and details.';
+            } else {
+                try {
+                    $pdo->prepare("INSERT INTO proposals(user_id,title,category,details,status) VALUES(?,?,?,?,'PENDING')")
+                        ->execute([(int)$user['id'], $title, $category ?: 'Other', $details]);
+                    audit($pdo, (int)$user['id'], 'PROPOSAL_SUBMITTED', $title);
+                    $sent = mail_admin($pdo, $config, 'New Fortune Apex proposal',
+                        "A new proposal is waiting for review.\n\nFrom: {$user['display_name']} (@{$user['username']})\nTitle: $title\nCategory: $category\n\nDetails:\n$details\n\nOpen the admin console to review it.");
+                    flash($sent ? 'success' : 'warning', $sent ? 'Proposal submitted. Admin notification sent.' : 'Proposal saved. Email notification did not send; the proposal is still in the admin console.');
+                    redirect('dashboard.php');
+                } catch (Throwable $ex) {
+                    error_log('[Fortune Apex proposal] ' . $ex->getMessage());
+                    $error = 'Could not save this proposal right now.';
+                }
+            }
+        }
+    }
+}
+$q=$pdo->prepare('SELECT id,title,category,details,status,admin_notes,created_at,reviewed_at FROM proposals WHERE user_id=? ORDER BY created_at DESC');$q->execute([(int)$user['id']]);$proposals=$q->fetchAll();$playerQ=$pdo->prepare('SELECT * FROM players WHERE user_id=? LIMIT 1');$playerQ->execute([(int)$user['id']]);$stats=$playerQ->fetch();page_header($config,$user,'My account','dashboard'); ?>
+<div class="section-heading"><div><div class="eyebrow">Member portal</div><h2>Welcome, <?=e($user['display_name'])?></h2><p>Your individual account, proposals and security settings.</p></div><a class="btn" href="change-password.php">Change password</a></div><div class="stats"><div class="stat"><small>Account status</small><strong style="font-size:23px">ACTIVE</strong><span class="tiny">MEMBER ACCESS</span></div><div class="stat"><small>Your proposals</small><strong><?=count($proposals)?></strong><span class="tiny">ADMIN REVIEWED</span></div><div class="stat"><small>Role</small><strong style="font-size:23px">PLAYER</strong><span class="tiny">NO ADMIN CONTROLS</span></div><div class="stat"><small>Joined</small><strong style="font-size:18px"><?=e(substr((string)$user['id'],0,12))?></strong><span class="tiny">MEMBER ID</span></div></div><?php if($error): ?><div class="flash error"><?=e($error)?></div><?php endif; ?><section class="section two-panel"><article class="panel"><div class="eyebrow">Idea corner</div><h2>Submit a proposal</h2><p>Suggest a new rule, feature, event, counter, achievement or improvement. You can submit ideas but cannot change decisions, systems, player stats or event status.</p><form method="post"><?=csrf_field()?><input type="hidden" name="action" value="proposal"><label class="field">Proposal title<input name="title" maxlength="120" required></label><label class="field">Category<select name="category"><option>Banking & Loans</option><option>Security & Penalties</option><option>Insurance</option><option>Events & Games</option><option>Player Systems</option><option>Website Feature</option><option>Governance</option><option>Other</option></select></label><label class="field">Proposal details<textarea name="details" maxlength="5000" required placeholder="Explain how it should work, why it helps, and any risks or edge cases."></textarea></label><button class="btn gold" type="submit">Submit for admin review</button></form></article><article class="panel"><div class="eyebrow">Your account</div><h2>Profile details</h2><p><b>Display name:</b> <?=e($user['display_name'])?></p><p><b>Username:</b> <?=e($user['username'])?></p><p><b>Email:</b> <?=e($user['email'])?></p><p><b>Access role:</b> Player</p><p class="hint">If your registered email is wrong, contact the admin team. Password changes can be done here; admin staff cannot see your existing password.</p><a class="btn" href="contact.php">Contact the admin team</a><?php if($stats): ?><hr style="border:0;border-top:1px solid var(--line);margin:20px 0"><h3>Your player card</h3><div class="pill-row"><span class="pill">Rank <?=e($stats['rank_title'])?></span><span class="pill">Score <?=number_format((int)$stats['fortune_score'])?></span><span class="pill">Wins <?=number_format((int)$stats['wins'])?></span><span class="pill">Losses <?=number_format((int)$stats['losses'])?></span></div><?php endif; ?></article></section>
+<section class="section"><div class="section-heading"><div><div class="eyebrow">Status tracker</div><h2>My proposals</h2><p>The admin exclusively controls the decision status and notes.</p></div><input class="searchbar" aria-label="Search my proposals" placeholder="Search your proposals by title, ID or status…" data-search-target="#myProposals"></div><div id="myProposals" class="grid two"><?php foreach($proposals as $p): ?><article class="card" data-search-text="<?=e(strtolower($p['title'].' '.$p['category'].' '.$p['status'].' '.$p['details']))?>"><div class="cardtop"><span class="meta">FA-P-<?=str_pad((string)$p['id'],4,'0',STR_PAD_LEFT)?></span><span class="tag <?=e(strtolower($p['status']))?>"><?=e($p['status'])?></span></div><h3><?=e($p['title'])?></h3><div class="meta"><?=e($p['category'])?> · <?=e($p['created_at'])?></div><p><?=e($p['details'])?></p><?php if($p['admin_notes']): ?><div class="notice"><b>Admin response:</b><br><?=e($p['admin_notes'])?></div><?php endif; ?></article><?php endforeach; ?><div class="empty" data-search-empty hidden>No proposal matches that search.</div><?php if(!$proposals): ?><div class="empty">No proposals submitted yet. Use the Idea Corner to send your first one.</div><?php endif; ?></div></section><?php page_footer(); ?>

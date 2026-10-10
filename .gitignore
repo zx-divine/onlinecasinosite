@@ -1,0 +1,11 @@
+# Private deployment secrets
+/config.php
+/config.php.new
+/.env
+/.env.*
+/vendor/
+
+# Local/runtime artifacts
+*.log
+.DS_Store
+Thumbs.db

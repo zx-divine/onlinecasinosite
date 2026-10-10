@@ -1,0 +1,10 @@
+# Fortune Apex access controls and custom error documents.
+# This file intentionally avoids Options, Header and URL-rewrite directives.
+<FilesMatch "^(config\.php(\.new)?|config\.example\.php|README\.md|database\.sql|\.gitignore|\.env(\..*)?|\.user\.ini)$">
+  Require all denied
+</FilesMatch>
+
+ErrorDocument 403 /403.html
+ErrorDocument 404 /404.html
+ErrorDocument 500 /500.html
+ErrorDocument 503 /503.html

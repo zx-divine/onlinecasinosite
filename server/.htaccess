@@ -1,0 +1,2 @@
+# Shared PHP libraries are for server-side include only, never direct HTTP access.
+Require all denied
