@@ -1,11 +1,24 @@
-# Private deployment secrets
-/config.php
-/config.php.new
+# Private deployment secrets: never commit these files.
+/database/config.php
+/database/config.php.new
+/database/keys/setup-attempts.json
+/database/logs/*
+!/database/logs/.htaccess
+!/database/logs/.gitkeep
+/database/backups/*
+!/database/backups/.htaccess
+!/database/backups/.gitkeep
+/database/keys/*
+!/database/keys/.htaccess
+/database/uploads/*
+!/database/uploads/.htaccess
+!/database/uploads/.gitkeep
 /.env
 /.env.*
 /vendor/
 
 # Local/runtime artifacts
 *.log
+*.tmp
 .DS_Store
 Thumbs.db

@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     flash($sent ? 'success' : 'warning', $sent ? 'Proposal submitted. Admin notification sent.' : 'Proposal saved. Email notification did not send; the proposal is still in the admin console.');
                     redirect('dashboard.php');
                 } catch (Throwable $ex) {
-                    error_log('[Fortune Apex proposal] ' . $ex->getMessage());
+                    error_log('[Fortune Apex proposal] Save failed (' . get_class($ex) . ', code ' . (string)$ex->getCode() . ').');
                     $error = 'Could not save this proposal right now.';
                 }
             }

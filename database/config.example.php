@@ -1,19 +1,17 @@
 <?php
 declare(strict_types=1);
-/**
- * Safe example only. Copy this file to config.php on the server and edit it privately.
- * Never commit config.php or real credentials.
- */
+// Copy to /database/config.php privately and fill in real values there.
+// This safe example intentionally has no working credentials or setup key.
 return [
     'app_name' => 'FORTUNE APEX',
     'base_url' => 'https://your-domain.example',
     'timezone' => 'Asia/Kolkata',
-    'setup_key' => 'CHANGE-THIS-TO-A-NEW-64-CHAR-RANDOM-HEX-STRING',
+    'setup_key' => 'REPLACE_WITH_A_LONG_RANDOM_VALUE',
     'db' => [
         'host' => 'mysql.example.invalid',
         'name' => 'database_name',
         'user' => 'database_user',
-        'pass' => 'ENTER_NEW_DATABASE_PASSWORD_HERE',
+        'pass' => 'REPLACE_WITH_DATABASE_PASSWORD',
         'charset' => 'utf8mb4',
     ],
     'mail' => [
@@ -21,9 +19,9 @@ return [
         'port' => 587,
         'encryption' => 'tls',
         'username' => 'you@example.com',
-        'password' => 'ENTER_NEW_GOOGLE_APP_PASSWORD_HERE',
+        'password' => 'REPLACE_WITH_EMAIL_APP_PASSWORD',
         'from_email' => 'you@example.com',
         'from_name' => 'Fortune Apex',
-        'admin_email' => '',
+        'admin_email' => 'you@example.com',
     ],
 ];

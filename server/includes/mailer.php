@@ -82,7 +82,7 @@ function send_app_mail(array $config, string $to, string $subject, string $body,
     $fromEmail = trim((string)($m['from_email'] ?? $username));
     $fromName = (string)($m['from_name'] ?? 'Fortune Apex');
 
-    if ($host === '' || !filter_var($username, FILTER_VALIDATE_EMAIL) || $password === '' ||
+    if (!preg_match('/^[A-Za-z0-9.-]{1,190}$/', $host) || !filter_var($username, FILTER_VALIDATE_EMAIL) || $password === '' ||
         str_contains($password, 'ENTER_NEW_') || str_contains($password, 'REPLACE_WITH') ||
         str_contains($password, 'CHANGE-THIS')) {
         throw new RuntimeException('SMTP is not configured. Run the deployment setup again with a new Google App Password.');
@@ -90,7 +90,7 @@ function send_app_mail(array $config, string $to, string $subject, string $body,
     if (!filter_var($to, FILTER_VALIDATE_EMAIL) || !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
         throw new RuntimeException('SMTP recipient or sender email address is invalid.');
     }
-    if (!in_array($encryption, ['tls', 'ssl', 'none'], true) || $port < 1 || $port > 65535) {
+    if (!in_array($encryption, ['tls', 'ssl'], true) || $port < 1 || $port > 65535) {
         throw new RuntimeException('SMTP transport settings are invalid.');
     }
     if (preg_match('/[\r\n]/', $subject) || preg_match('/[\r\n]/', $fromName)) {
